@@ -18,6 +18,20 @@ export class KmsService {
     this.kekKey = process.env.KEK_KEY ?? "";
   }
 
+
+  async isPrimaryVersion(): Promise<boolean> {
+    const dekToDecrypt = process.env.ENCRYPTED_DEK?? null;
+    if (!dekToDecrypt) {
+      throw new Error("No encrypted DEK available. Generate one first with generateEncryptedDek()");
+    }
+    const kekPath=await this.getKEK();
+    const [result] = await this.client.decrypt({
+      name: kekPath,
+      ciphertext: dekToDecrypt,
+    });
+    return result.usedPrimary ??false;
+  }
+
   async generateEncryptedDek(): Promise<string> {
     const dek = crypto.randomBytes(32);
     const pathKEK = await this.getKEK();
@@ -36,6 +50,27 @@ export class KmsService {
       throw new Error('Unexpected ciphertext format from KMS');
     }
 
+    return encryptedDekBase64;
+  }
+
+  async reEncryptDek(): Promise<string> {
+    const dek = await this.decryptDek();
+    const pathKEK = await this.getKEK();
+    const [result] = await this.client.encrypt({
+      name: pathKEK,
+      plaintext: dek
+    });
+    if(!result.ciphertext){
+      throw new Error('Failed to re-encrypt DEK');
+    }
+    let encryptedDekBase64: string;
+    if (result.ciphertext instanceof Uint8Array ) {
+      encryptedDekBase64 = Buffer.from(result.ciphertext).toString('base64');
+    } else if (typeof result.ciphertext === 'string') {
+      encryptedDekBase64 = Buffer.from(result.ciphertext).toString('base64');
+    } else {
+      throw new Error('Unexpected ciphertext format from KMS');
+    }
     return encryptedDekBase64;
   }
 

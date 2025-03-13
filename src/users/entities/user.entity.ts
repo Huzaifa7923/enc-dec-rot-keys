@@ -9,12 +9,9 @@ export class User {
   @Column()
   name: string;
 
-  @Column()
   email: string;
 
   @Column()
   password: string;
 
-  @Column({ type: 'text' }) // Store encrypted DEK in DB
-  encryptedDEK: string;
 }
