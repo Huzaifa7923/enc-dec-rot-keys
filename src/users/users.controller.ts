@@ -16,17 +16,20 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Get('/set-dek')
+  setDEK() {
+    return this.kmsService.generateEncryptedDek();
+  }
+
+
   @Get('/encrypt')
   encrypt(@Query('data') data:any ) {
-    console.log("encrypting...");
-    console.log(data)
     return this.kmsService.encryptData(data);
   }
 
-  @Get('/decrypt')
-  decrypt(@Query('data') data: string,@Query('dek') dek:string) {
-    console.log("Decrypting..")
-    return this.kmsService.decryptData(data,dek);
+  @Post('/decrypt')
+  decrypt(@Body('data') data: any) {
+    return this.kmsService.decryptData(data);
   }
 
   @Patch(':id')

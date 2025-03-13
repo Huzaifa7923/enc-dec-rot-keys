@@ -11,6 +11,9 @@ async function bootstrap() {
     transform: true, // transform payloads to DTO instances
     whitelist: true, // remove unwanted fields
   }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(express.raw());
   
   await app.listen(3001);
 
