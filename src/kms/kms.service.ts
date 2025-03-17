@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { KeyManagementServiceClient } from '@google-cloud/kms';
 import * as crypto from 'crypto';
-
+// aes-256-ecb -> deterministic -> same plaintext block always produces the same ciphertext block
 @Injectable()
 export class KmsService {
   private client: KeyManagementServiceClient;
@@ -128,16 +128,15 @@ export class KmsService {
     try {
       const dek = await this.decryptDek();
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv('aes-256-cbc', dek, iv);
+      const cipher = crypto.createCipheriv('aes-256-ecb', dek, '');
 
       const encryptedData = Buffer.concat([
         cipher.update(plaintext, 'utf8'),
         cipher.final(),
       ]);
 
-      const ivAndEncryptedData = Buffer.concat([iv, encryptedData]);
       return {
-        data: ivAndEncryptedData.toString('base64')
+        data: encryptedData.toString('base64')
       };
     } catch (error) {
       throw new Error(`Failed to encrypt data: ${error.message || 'Unknown error'}`);
@@ -161,13 +160,9 @@ export class KmsService {
       const dek = await this.decryptDek();
       const dataBuffer = Buffer.from(dataToDecrypt, 'base64');
 
-      if (dataBuffer.length <= 16) {
-        throw new Error(`Invalid encrypted data: too short to contain IV and content. Length: ${dataBuffer.length} bytes`);
-      }
-
-      const iv = dataBuffer.slice(0, 16);
-      const encryptedContent = dataBuffer.slice(16);
-      const decipher = crypto.createDecipheriv('aes-256-cbc', dek, iv);
+      // const iv = dataBuffer.slice(0, 16);
+      const encryptedContent = dataBuffer;
+      const decipher = crypto.createDecipheriv('aes-256-ecb', dek, '');
 
       const decryptedData = Buffer.concat([
         decipher.update(encryptedContent),
