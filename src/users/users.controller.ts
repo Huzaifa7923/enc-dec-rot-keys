@@ -11,14 +11,9 @@ export class UsersController {
     private readonly kmsService:KmsService
   ) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  @Post('/user')
+  create(@Body() createUserDto: {name: string, email: string, password: string}) {
     return this.usersService.create(createUserDto);
-  }
-
-  @Get('/set-dek')
-  setDEK() {
-    return this.kmsService.generateEncryptedDek();
   }
 
 

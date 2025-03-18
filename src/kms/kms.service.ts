@@ -125,7 +125,7 @@ export class KmsService {
       plaintext = JSON.stringify(plaintext);
     }
 
-    try {
+    try {      
       const dek = await this.decryptDek();
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-256-ecb', dek, '');
