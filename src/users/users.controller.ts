@@ -16,6 +16,10 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Get('/profile')
+  myProfile(@Param('id') id: number) {
+    return this.usersService.myProfile(id);
+  }
 
   @Get('/encrypt')
   encrypt(@Query('data') data:any ) {

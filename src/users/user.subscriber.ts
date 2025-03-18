@@ -28,6 +28,6 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     async afterLoad(entity: User, event?: LoadEvent<User> | undefined): Promise<void> {
         const { email} = entity;
         const data=await this.kmsService.decryptData(email);
-        entity.email=data.data;
+        entity.email=data;
     }
 }   

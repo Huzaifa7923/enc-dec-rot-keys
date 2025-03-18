@@ -18,6 +18,10 @@ export class UsersService {
     return `This action returns all users`;
   }
 
+  myProfile(userId: number) {
+    return this.userRepository.findOne({where:{id:userId}});
+  }
+
   findOne(id: number) {
     return `This action returns a #${id} user`;
   }
