@@ -9,6 +9,7 @@ import { User } from './users/entities/user.entity';
 import { UserSubscriber } from './users/user.subscriber';
 import { OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { CacheModule } from '@nestjs/cache-manager';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +24,9 @@ import { DataSource } from 'typeorm';
       database: 'enc_dec',
       entities: [User],
       synchronize: true,
+    }),
+    CacheModule.register({
+      isGlobal:true
     }),
     UsersModule],
   controllers: [AppController],

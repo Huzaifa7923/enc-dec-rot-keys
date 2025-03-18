@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { KeyManagementServiceClient } from '@google-cloud/kms';
 import * as crypto from 'crypto';
+import { CACHE_MANAGER,Cache } from '@nestjs/cache-manager';
+
 // aes-256-ecb -> deterministic -> same plaintext block always produces the same ciphertext block
 @Injectable()
 export class KmsService {
@@ -10,14 +12,15 @@ export class KmsService {
   private keyRing: string;
   private kekKey: string;
 
-  constructor() {
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {
     this.client = new KeyManagementServiceClient();
     this.projectId = process.env.GOOGLE_CLOUD_PROJECT_ID ?? "";
     this.location = process.env.KMS_LOCATION ?? "";
     this.keyRing = process.env.KMS_KEYRING ?? "";
     this.kekKey = process.env.KEK_KEY ?? "";
   }
-
 
   async isPrimaryVersion(): Promise<boolean> {
     const dekToDecrypt = process.env.ENCRYPTED_DEK?? null;
@@ -71,6 +74,7 @@ export class KmsService {
     } else {
       throw new Error('Unexpected ciphertext format from KMS');
     }
+    await this.cacheManager.set('encryptedDek', encryptedDekBase64);
     return encryptedDekBase64;
   }
 
@@ -87,6 +91,13 @@ export class KmsService {
     const dekToDecrypt = process.env.ENCRYPTED_DEK ?? null;
     if (!dekToDecrypt) {
       throw new Error("No encrypted DEK available. Generate one first with generateEncryptedDek()");
+    }
+
+    const value:string|null = await this.cacheManager.get('encryptedDek');
+
+    if(value){
+      console.log("x");
+      return Buffer.from(value, 'base64');
     }
 
     const pathKEK = await this.getKEK();
@@ -109,6 +120,8 @@ export class KmsService {
       if (dek.length !== 32) {
         throw new Error(`Invalid DEK length after decryption: ${dek.length} bytes (expected 32)`);
       }
+
+      await this.cacheManager.set('encryptedDek', dek.toString('base64'));
 
       return dek;
     } catch (error) {
